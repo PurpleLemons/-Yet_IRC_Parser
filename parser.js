@@ -3,7 +3,6 @@
 var Path = require('path');
 var Hapi = require('hapi');
 var server = new Hapi.Server('localhost', 3000);
-var oldPath = "/Users/PurpleLemons/Downloads/";//Change this to where you have the log files downloaded
 var newPath="http://localhost:3000/";//Wherever you want to access the program from
 var config = require('getconfig');
 var simpleS3 = require('simples3');
@@ -357,3 +356,13 @@ server.route({
 server.start(function () {
     console.log('Server running at:', server.info.uri);
 });
+
+
+
+
+
+
+//TODO
+//Write a thingy that checks a message for URLs; If it has https://, then it should check each character after it until it reaches a space or other character not allowed in a URL
+//Figure out the scroll stuff (Where a user can scroll up/down and if it reaches the top/bottom, it will load the next/previous log)
+//Seperate the user and the messages. If a user takes multiple actions, it only shows the name once followed by each action in seperate lines
