@@ -8,15 +8,6 @@ var config = require('getconfig');
 var simpleS3 = require('simples3');
 var s3Store = simpleS3.createClient(config);
 
-
-/*s3Store.getBucket('static.andyet.com', '/irclogs', function _bucketInfo(err, bucketInfo) {
-  var temp = bucketInfo.contents.files;
-  //To get just the files in the bucket
-  console.log(temp[8].key);
-  if(temp[i].key == '/irclogs/&yet-'+strYear+'-'+strMonth+'-'+strDay+'.html')
-
-});*/
-
 server.route({
     method: 'GET',
     path: '/',
@@ -232,11 +223,15 @@ server.route({
 		}
 		//Next, the actual stuff in the log gets parsed
         var fileStr;
+        var sHeight=0;//How high up the side menu will be for the usernames (Varies with the amount of actions logged)
         var tempArray = [];//This is where the paragraphs for the data are made. They are added last, though
         s3Store.getObject('static.andyet.com/irclogs', '%26yet-'+strYear+'-'+strMonth+'-'+request.params.file.substring(3,5)+'.log', function _responseObject(err, response, fileBuf) {
-            fileStr = fileBuf.toString().split('\n');//Asynchronous method, everything that follows requires this line
+            fileStr = fileBuf.toString().split('\n');
+            var currentUser; //For long chains of user actions
+            var nameChange = false; //Determines if another user makes an action
             for(var i = 0; i < fileStr.length; i++)
             {
+                sHeight+=20;//About 20 pixels per line
                 var date = new Date(fileStr[i].substring(0,19))
                 var userN = "";
                 if(fileStr[i].substring(20,24) == 'msg ')
@@ -244,8 +239,16 @@ server.route({
                     var done = false;
                     var msgStart = 0;
                     if(fileStr[i].substring(25,30) == ' ybot')//ybot has an extra space before its name
-                    {       msgStart = 30;
-                            userN = 'ybot';}
+                    {   msgStart = 30;
+                        userN = 'ybot';
+                        if(currentUser == userN)
+                            nameChange = false;
+                        else
+                        {
+                            nameChange = true;
+                            currentUser = userN;
+                        }
+                    }
                     if(fileStr[i].substring(25,30) != ' ybot')
                         for(var j = 25; j < fileStr[i].length; j++)
                         {
@@ -255,9 +258,29 @@ server.route({
                             //Checks for false due to spaces in the actual message
                             //Otherwise, only the last word is displayed
                             if(fileStr[i].charAt(j) == " " && done == false)
-                            {       done = true;
-                                    msgStart=j+1;}
+                            {   done = true;
+                                msgStart=j+1;
+                                if(currentUser == userN)
+                                    nameChange = false;
+                                else
+                                {
+                                    nameChange = true;
+                                    currentUser = userN;
+                                }
+                            }
                         }
+                    if(nameChange == true)
+                    {
+                        //Add the user's name to the left list and increase the size thingy
+                    }
+                    else
+                    {
+                        //Just increase the size of the boxes that contain text
+                    }
+                        //Goes to the left (The username)
+                    //tempArray.push("              <p class=\"msg\">"+userN+"</p>");
+                        //Goes to the right (The message)
+                    //tempArray.push("              <p class=\"msg\">"+date.toLocaleTimeString()+fileStr[i].substring(msgStart,fileStr[i].length)+"</p>");
                     tempArray.push("                <p class=\"msg\">"+date.toLocaleTimeString() + ", <em style=\"color:red;\">" + userN +
                                    "</em> <em style=\"color:blue;\">wrote</em>: " + fileStr[i].substring(msgStart,fileStr[i].length)+"</p>");
                 }
@@ -323,8 +346,6 @@ server.route({
                         }
                     tempArray.push("                <p class=\"act\">"+date.toLocaleTimeString() + ", <em style=\"color:red;\">" + userN +
                                    "</em> <em style=\"color:blue;\">" + fileStr[i].substring(msgStart,fileStr[i].length)+"</em></p>");
-                    
-
                 }
             }
             //Then the checkboxes for displaying specific actions
@@ -357,12 +378,9 @@ server.start(function () {
     console.log('Server running at:', server.info.uri);
 });
 
-
-
-
-
-
 //TODO
 //Write a thingy that checks a message for URLs; If it has https://, then it should check each character after it until it reaches a space or other character not allowed in a URL
 //Figure out the scroll stuff (Where a user can scroll up/down and if it reaches the top/bottom, it will load the next/previous log)
-//Seperate the user and the messages. If a user takes multiple actions, it only shows the name once followed by each action in seperate lines
+//Seperate the user and the messages. If a user takes multiple actions, it only shows the name once followed by each action in seperate lines (Pertains only to messages)
+//Assign each name a color. Possibly based on the first character in their name? A is red, B is blue, C is Green, D is purple, etc. Non-letters can default to black
+
